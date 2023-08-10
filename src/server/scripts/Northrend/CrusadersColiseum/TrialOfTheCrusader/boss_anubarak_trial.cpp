@@ -922,11 +922,14 @@ public:
         void HandleAfterHit()
         {
             if (Unit* caster = GetCaster())
-                if (GetHitDamage() > 0)
+            {
+                int32 damageAndAbsorb = GetHitDamage() + GetHitAbsorb();
+                if (damageAndAbsorb > 0)
                 {
-                    int32 damage = GetHitDamage();
-                    caster->CastCustomSpell(caster, SPELL_LEECHING_SWARM_HEAL, &damage, 0, 0, true);
+                    damageAndAbsorb *= 2.3;
+                    caster->CastCustomSpell(caster, SPELL_LEECHING_SWARM_HEAL, &damageAndAbsorb, 0, 0, true);
                 }
+            }
         }
 
         void Register() override

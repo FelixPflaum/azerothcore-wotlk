@@ -666,6 +666,7 @@ public:
     // Damage and healing in effects need just calculate
     int32 m_damage;           // Damge   in effects count here
     int32 m_healing;          // Healing in effects count here
+    int32 m_absorb;           // Holds absorb value for current target effect iteration. Shitty fix to have this available outside (scripts)...
 
     // ******************************************
     // Spell trigger system

@@ -2656,6 +2656,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
     // Reset damage/healing counter
     m_damage = target->damage;
     m_healing = -target->damage;
+    m_absorb = 0;
 
     m_spellAura = nullptr; // Set aura to null for every target-make sure that pointer is not used for unit without aura applied
 
@@ -2881,6 +2882,7 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
         }
 
         m_damage = damageInfo.damage;
+        m_absorb = damageInfo.absorb;
     }
     // Passive spell hits/misses or active spells only misses (only triggers)
     else
