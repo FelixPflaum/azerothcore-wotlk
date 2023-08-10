@@ -860,7 +860,8 @@ bool SpellMgr::IsSpellProcEventCanTriggeredBy(SpellInfo const* spellProto, Spell
     if (procEvent_procEx == PROC_EX_NONE)
     {
         // No extra req, so can trigger only for hit/crit - spell has to be active
-        if ((procExtra & (PROC_EX_NORMAL_HIT | PROC_EX_CRITICAL_HIT)) && active)
+        // Classic WOTLK: Also trigger on blocked hits
+        if ((procExtra & (PROC_EX_NORMAL_HIT | PROC_EX_CRITICAL_HIT | PROC_EX_BLOCK)) && active)
             return true;
     }
     else // Passive spells hits here only if resist/reflect/immune/evade

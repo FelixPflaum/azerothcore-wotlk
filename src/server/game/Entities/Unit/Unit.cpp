@@ -16401,7 +16401,8 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* target, uint32 procFlag, u
 
         ProcTriggeredData triggerData(itr->second->GetBase());
         // Defensive procs are active on absorbs (so absorption effects are not a hindrance)
-        bool active = damage || (procExtra & PROC_EX_BLOCK && isVictim);
+        // Classic WotLK: Fully blocked hits also trigger "on melee hit" spells when attacking something
+        bool active = damage || (procExtra & PROC_EX_BLOCK /*&& isVictim*/);
         if (isVictim)
             procExtra &= ~PROC_EX_INTERNAL_REQ_FAMILY;
 
