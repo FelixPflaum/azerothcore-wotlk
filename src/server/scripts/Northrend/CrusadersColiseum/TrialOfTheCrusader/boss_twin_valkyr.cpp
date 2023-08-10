@@ -399,12 +399,23 @@ struct boss_twin_valkyrAI : public ScriptedAI
                                         tList.push_back(plr->GetGUID());
 
                         if (!tList.empty())
-                            if (Player* target = ObjectAccessor::GetPlayer(*me, tList[urand(0, tList.size() - 1)]))
+                        {
+                            ObjectGuid firstGuid = tList[urand(0, tList.size() - 1)];
+                            if (Player* firstTarget = ObjectAccessor::GetPlayer(*me, firstGuid))
+                                me->CastSpell(firstTarget, me->GetEntry() == NPC_LIGHTBANE ? SPELL_LIGHT_TOUCH : SPELL_DARK_TOUCH, false);
+
+                            if (tList.size() > 1)
                             {
-                                me->CastSpell(target, me->GetEntry() == NPC_LIGHTBANE ? SPELL_LIGHT_TOUCH : SPELL_DARK_TOUCH, false);
-                                events.Repeat(45s, 50s);
-                                break;
+                                ObjectGuid secondGuid = tList[urand(0, tList.size() - 1)];
+                                while (secondGuid == firstGuid)
+                                    secondGuid = tList[urand(0, tList.size() - 1)];
+                                if (Player* secondTarget = ObjectAccessor::GetPlayer(*me, secondGuid))
+                                    me->CastSpell(secondTarget, me->GetEntry() == NPC_LIGHTBANE ? SPELL_LIGHT_TOUCH : SPELL_DARK_TOUCH, false);
                             }
+
+                            events.Repeat(45s, 50s);
+                            break;
+                        }
                     }
                     events.Repeat(10s);
                 }
