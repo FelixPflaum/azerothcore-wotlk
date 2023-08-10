@@ -3097,7 +3097,8 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
             (m_diminishGroup == DIMINISHING_TAUNT && (flagsExtra & CREATURE_FLAG_EXTRA_OBEYS_TAUNT_DIMINISHING_RETURNS)))) || type == DRTYPE_ALL)
         {
             // Do not apply diminish return if caster is NPC
-            if (m_caster->IsCharmedOwnedByPlayerOrPlayer())
+            // No, apply DRTYPE_ALL for NPC casters too, especially stuns should most definitely DR.
+            if (m_caster->IsCharmedOwnedByPlayerOrPlayer() || type == DRTYPE_ALL)
             {
                 unit->IncrDiminishing(m_diminishGroup);
             }
