@@ -635,6 +635,12 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                             SetCasterActualDist(0);
                             CAST_AI(SmartAI, me->AI())->SetForcedCombatMove(0);
                         }
+                        else if (spellInfo && target->isType(TYPEMASK_UNIT) && target->ToUnit()->IsImmunedToDamageOrSchool(spellInfo))
+                        {
+                            SetCasterActualDist(0);
+                            CAST_AI(SmartAI, me->AI())->SetForcedCombatMove(0);
+                            break;
+                        }
                         else if (GetCasterActualDist() == 0.0f && me->GetPowerPct(GetCasterPowerType()) > 30.0f)
                         {
                             RestoreCasterMaxDist();
