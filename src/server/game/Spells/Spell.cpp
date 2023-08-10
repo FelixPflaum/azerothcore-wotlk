@@ -7918,6 +7918,13 @@ bool Spell::CheckEffectTarget(Unit const* target, uint32 eff) const
         return true;
     }
 
+    // Ignore los for raid wide buffs (they all have radius 100y), e.g. Prayer of Fortitude, Gift of the Wild or greater Blessings.
+    if(m_caster->GetTypeId() == TYPEID_PLAYER && m_spellInfo->Effects[eff].RadiusEntry && m_spellInfo->Effects[eff].RadiusEntry->RadiusMax == 100.0f
+        && (m_spellInfo->Effects[eff].TargetA.GetCheckType() == TARGET_CHECK_RAID || m_spellInfo->Effects[eff].TargetA.GetCheckType() == TARGET_CHECK_RAID_CLASS))
+    {
+        return true;
+    }
+
     /// @todo: below shouldn't be here, but it's temporary
     //Check targets for LOS visibility (except spells without range limitations)
     switch (m_spellInfo->Effects[eff].Effect)
