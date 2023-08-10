@@ -31,6 +31,7 @@
 #include "ScriptMgr.h"
 #include "Spell.h"
 #include "WorldSession.h"
+#include "GameTime.h"
 
 BossBoundaryData::~BossBoundaryData()
 {
@@ -317,6 +318,60 @@ void InstanceScript::AddMinion(Creature* minion, bool add)
         itr->second.bossInfo->minion.erase(minion);
 }
 
+void InstanceScript::ResetPlayerCooldownsClassic()
+{
+    Map::PlayerList const& players = instance->GetPlayers();
+
+    if (players.IsEmpty())
+        return;
+
+    for (const auto& i : players)
+    {
+        Player* player = i.GetSource();
+
+        SpellCooldowns cooldowns = player->GetSpellCooldowns();
+        for (auto itr = cooldowns.begin(); itr != cooldowns.end(); itr++)
+        {
+            SpellInfo const* spellInfo = sSpellMgr->CheckSpellInfo(itr->first);
+            if (!spellInfo)
+                continue;
+
+            // Only class spells
+            if (spellInfo->SpellFamilyName == 0)
+                continue;
+
+            // Skip excluded spells
+            switch (itr->first)
+            {
+            case 633:   // LoH 1
+            case 2800:  // LoH 2
+            case 10310: // LoH 3
+            case 27154: // LoH 4
+            case 48788: // LoH 5
+            case 18540: // Ritual of Doom
+            case 20608: // Ankh
+                continue;
+            }
+
+            // Ignore spells with less than 2m base cooldown
+            constexpr uint32 twoMinutes = 2 * MINUTE * IN_MILLISECONDS;
+            if (spellInfo->RecoveryTime < twoMinutes && spellInfo->CategoryRecoveryTime < twoMinutes)
+                continue;
+
+            // Ignore long cooldowns because no clue what that could do.
+            constexpr uint32 twoHours = 2 * HOUR * IN_MILLISECONDS;
+            if (spellInfo->RecoveryTime > twoHours || spellInfo->CategoryRecoveryTime > twoHours)
+                continue;
+
+            player->RemoveSpellCooldown(itr->first, true);
+        }
+
+        // Remove Sated and Exhaustion
+        player->RemoveAurasDueToSpell(57724);
+        player->RemoveAurasDueToSpell(57723);
+    }
+}
+
 bool InstanceScript::SetBossState(uint32 id, EncounterState state)
 {
     if (id < bosses.size())
@@ -337,6 +392,19 @@ bool InstanceScript::SetBossState(uint32 id, EncounterState state)
                 for (MinionSet::iterator i = bossInfo->minion.begin(); i != bossInfo->minion.end(); ++i)
                     if ((*i)->isWorldBoss() && (*i)->IsAlive())
                         return false;
+
+            if (bossInfo->state == IN_PROGRESS && (state == DONE || state == NOT_STARTED))
+            {
+                Milliseconds combatDuration = GameTime::GetGameTimeMS() - encounterStartTimes[id];
+                if (combatDuration > minCooldownResetCombatTime)
+                    ResetPlayerCooldownsClassic();
+
+                encounterStartTimes[id] = Milliseconds(0);
+            }
+            else if (state == IN_PROGRESS)
+            {
+                encounterStartTimes[id] = GameTime::GetGameTimeMS();
+            }
 
             bossInfo->state = state;
             SaveToDB();

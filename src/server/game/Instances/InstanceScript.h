@@ -263,9 +263,15 @@ public:
 
     // Allows executing code using all creatures registered in the instance script as minions
     void DoForAllMinions(uint32 id, std::function<void(Creature*)> exec);
+
+    // Reset player cooldowns 
+    void ResetPlayerCooldownsClassic();
 protected:
     void SetHeaders(std::string const& dataHeaders);
-    void SetBossNumber(uint32 number) { bosses.resize(number); }
+    void SetBossNumber(uint32 number) {
+        bosses.resize(number);
+        encounterStartTimes.resize(number);
+    }
     void SetPersistentDataCount(uint32 number) { persistentData.resize(number); }
     void LoadBossBoundaries(BossBoundaryData const& data);
     void LoadDoorData(DoorData const* data);
@@ -295,8 +301,11 @@ protected:
 private:
     static void LoadObjectData(ObjectData const* creatureData, ObjectInfoMap& objectInfo);
 
+    static constexpr Milliseconds minCooldownResetCombatTime = Milliseconds(30000);
+
     std::vector<char> headers;
     std::vector<BossInfo> bosses;
+    std::vector<Milliseconds> encounterStartTimes;
     std::vector<uint32> persistentData;
     DoorInfoMap doors;
     MinionInfoMap minions;
