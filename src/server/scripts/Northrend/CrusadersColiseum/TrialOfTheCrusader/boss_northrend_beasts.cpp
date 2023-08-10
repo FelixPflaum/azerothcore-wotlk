@@ -260,7 +260,7 @@ public:
         {
             me->setActive(true);
             events.Reset();
-            events.RescheduleEvent(EVENT_SPELL_IMPALE, 9s, 10s);
+            events.RescheduleEvent(EVENT_SPELL_IMPALE, 11s);
             events.RescheduleEvent(EVENT_SPELL_STAGGERING_STOMP, 15s);
             events.RescheduleEvent(EVENT_PICK_SNOBOLD_TARGET, 16s, 24s);
 
@@ -297,14 +297,14 @@ public:
                     {
                         if( Unit* victim = me->GetVictim() )
                             me->CastSpell(victim, SPELL_IMPALE, false);
-                        events.Repeat(9s, 10s);
+                        events.Repeat(11s);
                     }
                     else
                         events.Repeat(2500ms);
                     break;
                 case EVENT_SPELL_STAGGERING_STOMP:
                     me->CastSpell((Unit*)nullptr, SPELL_STAGGERING_STOMP, false);
-                    events.Repeat(20s, 25s);
+                    events.Repeat(20s);
                     break;
                 case EVENT_PICK_SNOBOLD_TARGET:
                     if( Vehicle* vk = me->GetVehicleKit() )
@@ -495,12 +495,12 @@ struct boss_jormungarAI : public ScriptedAI
                     events.RescheduleEvent(EVENT_SUBMERGE, 1500ms);
                 break;
             case -2:
-                if( me->HasUnitFlag(UNIT_FLAG_NON_ATTACKABLE) )
+                if (me->HasUnitFlag(UNIT_FLAG_NON_ATTACKABLE))
                     bIsStationary = true; // it will come out mobile soon
-                else if( me->GetDisplayId() == _MODEL_STATIONARY )
+                else /*if( me->GetDisplayId() == _MODEL_STATIONARY )*/
                     events.RescheduleEvent(EVENT_SUBMERGE, 1s);
-                else
-                    events.CancelEvent(EVENT_SUBMERGE);
+                /*else
+                    events.CancelEvent(EVENT_SUBMERGE);*/
                 me->CastSpell(me, SPELL_ENRAGE, true);
                 Talk(EMOTE_ENRAGE);
                 break;
@@ -514,7 +514,7 @@ struct boss_jormungarAI : public ScriptedAI
         {
             me->SetAttackTime(BASE_ATTACK, 1500);
             events.RescheduleEvent(EVENT_SPELL_SPRAY, (me->GetEntry() == NPC_ACIDMAW ? 20s : 15s));
-            events.RescheduleEvent(EVENT_SPELL_SWEEP, 15s, 30s);
+            events.RescheduleEvent(EVENT_SPELL_SWEEP, 15s, 20s);
         }
         else
         {
@@ -643,7 +643,7 @@ struct boss_jormungarAI : public ScriptedAI
             case EVENT_SPELL_SLIME_POOL:
                 if( Creature* c = me->SummonCreature(NPC_SLIME_POOL, *me, TEMPSUMMON_TIMED_DESPAWN, 30000) )
                     c->CastSpell(c, SPELL_SLIME_POOL_EFFECT, true);
-                events.Repeat(30s);
+                events.Repeat(10s);
                 break;
         }
 
@@ -818,7 +818,7 @@ public:
             Map::PlayerList const& lPlayers = me->GetMap()->GetPlayers();
             for( Map::PlayerList::const_iterator itr = lPlayers.begin(); itr != lPlayers.end(); ++itr )
                 if( Unit* p = itr->GetSource() )
-                    if( p->IsAlive() && p->GetExactDist(me) <= 12.0f )
+                    if( p->IsAlive() && p->GetExactDist(me) <= 10.0f )
                     {
                         DoCastAOE(SPELL_TRAMPLE);
                         return true;
