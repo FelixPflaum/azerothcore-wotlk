@@ -96,8 +96,8 @@ enum ValkyrEvents
 {
     EVENT_BERSERK = 1,
     EVENT_SUMMON_BALLS_1,
-    EVENT_SUMMON_BALLS_2,
-    EVENT_SUMMON_BALLS_3,
+    //EVENT_SUMMON_BALLS_2,
+    //EVENT_SUMMON_BALLS_3,
     EVENT_SPELL_SPIKE,
     EVENT_SPELL_TOUCH,
     EVENT_SPECIAL,
@@ -106,7 +106,7 @@ enum ValkyrEvents
 
 struct boss_twin_valkyrAI : public ScriptedAI
 {
-    boss_twin_valkyrAI(Creature* pCreature) : ScriptedAI(pCreature), summons(me)
+    boss_twin_valkyrAI(Creature* pCreature) : ScriptedAI(pCreature), summonsLight(me), summonsDark(me)
     {
         pInstance = pCreature->GetInstanceScript();
         me->SetReactState(REACT_PASSIVE);
@@ -124,7 +124,7 @@ struct boss_twin_valkyrAI : public ScriptedAI
 
             // special events here
             events.RescheduleEvent(EVENT_BERSERK, IsHeroic() ? 6min : 10min);
-            events.RescheduleEvent(EVENT_SUMMON_BALLS_1, 10s, 15s);
+            events.RescheduleEvent(EVENT_SUMMON_BALLS_1, 20s);
             events.RescheduleEvent(EVENT_SPECIAL, 45s);
         }
         events.RescheduleEvent(EVENT_SPELL_SPIKE, 5s, 8s);
@@ -136,7 +136,8 @@ struct boss_twin_valkyrAI : public ScriptedAI
     }
 
     InstanceScript* pInstance;
-    SummonList summons;
+    SummonList summonsLight;
+    SummonList summonsDark;
     EventMap events;
     int32 LastSynchroHP;
     uint8 SpecialMask;
@@ -146,7 +147,8 @@ struct boss_twin_valkyrAI : public ScriptedAI
         switch( a )
         {
             case -1:
-                summons.DespawnAll();
+                summonsLight.DespawnAll();
+                summonsDark.DespawnAll();
                 if( pInstance && me->GetEntry() == NPC_LIGHTBANE )
                 {
                     uint32 essenceId1 = 0, empoweredId1 = 0, touchId1 = 0, essenceId2 = 0, empoweredId2 = 0, touchId2 = 0;
@@ -308,32 +310,41 @@ struct boss_twin_valkyrAI : public ScriptedAI
 
                 break;
             case EVENT_SUMMON_BALLS_1:
-            case EVENT_SUMMON_BALLS_2:
-            case EVENT_SUMMON_BALLS_3:
+            //case EVENT_SUMMON_BALLS_2:
+            //case EVENT_SUMMON_BALLS_3:
                 {
-                    uint8 count = 0;
-                    if( IsHeroic() )
-                        count = eventId == EVENT_SUMMON_BALLS_3 ? 36 : 6;
-                    else
-                        count = eventId == EVENT_SUMMON_BALLS_3 ? 24 : 4;
-                    for( uint8 i = 0; i < count; ++i )
+                    uint8 targetSpawnAmount = 12;
+                    if (IsHeroic())
+                        targetSpawnAmount = 14;
+
+                    uint8 missingLight = targetSpawnAmount - summonsLight.size();
+                    uint8 missingDark = targetSpawnAmount - summonsDark.size();
+
+                    for (uint8 i = 0; i < missingLight; ++i)
                     {
                         float angle = rand_norm() * 2 * M_PI;
-                        if( Creature* ball = me->SummonCreature((i % 2) ? NPC_CONCENTRATED_DARK : NPC_CONCENTRATED_LIGHT, Locs[LOC_CENTER].GetPositionX() + cos(angle) * 47.0f, Locs[LOC_CENTER].GetPositionY() + std::sin(angle) * 47.0f, Locs[LOC_CENTER].GetPositionZ() + 1.5f, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1500) )
+                        if (Creature* ball = me->SummonCreature(NPC_CONCENTRATED_LIGHT, Locs[LOC_CENTER].GetPositionX() + cos(angle) * 47.0f, Locs[LOC_CENTER].GetPositionY() + std::sin(angle) * 47.0f, Locs[LOC_CENTER].GetPositionZ() + 1.5f, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1500))
+                            boss_twin_valkyrAI::JustSummoned(ball);
+                    }
+
+                    for (uint8 i = 0; i < missingDark; ++i)
+                    {
+                        float angle = rand_norm() * 2 * M_PI;
+                        if (Creature* ball = me->SummonCreature(NPC_CONCENTRATED_DARK, Locs[LOC_CENTER].GetPositionX() + cos(angle) * 47.0f, Locs[LOC_CENTER].GetPositionY() + std::sin(angle) * 47.0f, Locs[LOC_CENTER].GetPositionZ() + 1.5f, 0.0f, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 1500))
                             boss_twin_valkyrAI::JustSummoned(ball);
                     }
 
                     switch( eventId )
                     {
                         case EVENT_SUMMON_BALLS_1:
-                            events.RescheduleEvent(EVENT_SUMMON_BALLS_2, 8s);
+                            events.RescheduleEvent(EVENT_SUMMON_BALLS_1, 20s);
                             break;
-                        case EVENT_SUMMON_BALLS_2:
+                        /*case EVENT_SUMMON_BALLS_2:
                             events.RescheduleEvent(EVENT_SUMMON_BALLS_3, 8s);
                             break;
                         case EVENT_SUMMON_BALLS_3:
                             events.RescheduleEvent(EVENT_SUMMON_BALLS_1, 15s);
-                            break;
+                            break;*/
                     }
                 }
                 break;
@@ -501,12 +512,18 @@ struct boss_twin_valkyrAI : public ScriptedAI
 
     void JustSummoned(Creature* s) override
     {
-        summons.Summon(s);
+        if (s->GetEntry() == NPC_CONCENTRATED_LIGHT)
+            summonsLight.Summon(s);
+        else
+            summonsDark.Summon(s);
     }
 
     void SummonedCreatureDespawn(Creature* s) override
     {
-        summons.Despawn(s);
+        if (s->GetEntry() == NPC_CONCENTRATED_LIGHT)
+            summonsLight.Despawn(s);
+        else
+            summonsDark.Despawn(s);
     }
 
     void KilledUnit(Unit* who) override
@@ -719,11 +736,11 @@ public:
 
         void MovementInform(uint32 type, uint32 id) override
         {
-            if( type != POINT_MOTION_TYPE || id != 0 )
+            /*if( type != POINT_MOTION_TYPE || id != 0 )
                 return;
 
             if( urand(0, 2) )
-                me->DespawnOrUnsummon(0);
+                me->DespawnOrUnsummon(0);*/
         }
 
         void MoveToNextPoint()
