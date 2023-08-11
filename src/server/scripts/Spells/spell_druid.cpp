@@ -60,6 +60,8 @@ enum DruidSpells
     SPELL_DRUID_ENRAGE                      = 5229,
     SPELL_DRUID_ENRAGED_DEFENSE             = 70725,
     SPELL_DRUID_ITEM_T10_FERAL_4P_BONUS     = 70726,
+    SPELL_DRUID_OMEN_OF_CLARITY             = 16864,
+    SPELL_DRUID_OMEN_CLEARCAST              = 16870,
 };
 
 enum DruidIcons
@@ -1169,6 +1171,25 @@ class spell_dru_moonkin_form_passive_proc : public AuraScript
     }
 };
 
+class spell_dru_faerie_fire_feral_ooc_proc : public SpellScript
+{
+    PrepareSpellScript(spell_dru_faerie_fire_feral_ooc_proc);
+
+    void OnHit()
+    {
+        if (Unit* caster = GetCaster())
+        {
+            if (caster->HasAura(SPELL_DRUID_OMEN_OF_CLARITY))
+                caster->CastSpell(caster, SPELL_DRUID_OMEN_CLEARCAST, true);
+        }
+    }
+
+    void Register() override
+    {
+        AfterHit += SpellHitFn(spell_dru_faerie_fire_feral_ooc_proc::OnHit);
+    }
+};
+
 void AddSC_druid_spell_scripts()
 {
     RegisterSpellScript(spell_dru_bear_form_passive);
@@ -1204,4 +1225,5 @@ void AddSC_druid_spell_scripts()
     RegisterSpellScript(spell_dru_t10_restoration_4p_bonus);
     RegisterSpellScript(spell_dru_wild_growth);
     RegisterSpellScript(spell_dru_moonkin_form_passive_proc);
+    RegisterSpellScript(spell_dru_faerie_fire_feral_ooc_proc);
 }
